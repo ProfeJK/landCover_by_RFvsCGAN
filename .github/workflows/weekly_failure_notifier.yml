@@ -1,0 +1,50 @@
+name: Weekly Failure Notifier
+
+on:
+  schedule:
+    # Todos los lunes a las 8:00 am Bogotá time (UTC-5)
+    - cron: '0 13 * * 1'  # UTC = Bogotá + 5 horas
+
+jobs:
+  check-last-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check previous workflow run status
+        id: check_status
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: runs } = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 1,
+              status: 'completed'
+            });
+            const conclusion = runs.workflow_runs[0]?.conclusion || 'no_runs';
+            console.log(`Last workflow conclusion: ${conclusion}`);
+            return conclusion;
+
+      - name: Send email if failure detected
+        if: steps.check_status.outputs.result == 'failure'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          subject: 🚨 Fallo detectado en Workflow - landCover_by_RFvsCGAN
+          body: |
+            Hola,
+
+            Se detectó una falla en la última ejecución del workflow en el repositorio landCover_by_RFvsCGAN.
+
+            Por favor, revisa el siguiente enlace para más detalles:
+            https://github.com/${{ github.repository }}/actions
+
+            Fecha de verificación: ${{ github.event.schedule }}
+
+            Saludos,
+            GitHub Actions Bot
+          to: tu_correo@gmail.com
+          from: GitHub Actions <${{ secrets.MAIL_USERNAME }}>
+          secure: true
