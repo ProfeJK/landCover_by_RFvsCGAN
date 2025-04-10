@@ -1,0 +1,10 @@
+numpy
+pandas
+matplotlib
+scikit-learn
+tensorflow
+xgboost
+ipykernel
+nbconvert
+pytest
+bandit
