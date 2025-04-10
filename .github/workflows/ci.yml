@@ -1,26 +1,60 @@
-name: Python application
+name: landCover RFvsCGAN - CI/CD Completo
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch: # Permite lanzarlo manualmente
 
 jobs:
-  build:
-
+  build-test-deploy:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.9'
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt || true
-    - name: Run basic command
-      run: |
-        echo "Workflow ejecutado correctamente 🚀"
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install nbconvert jupyter nbformat papermill pip-audit
+
+      - name: Execute Jupyter notebook
+        run: |
+          papermill MODIScrooped_Analisis_Avanzado_santander_2025.ipynb output.ipynb
+
+      - name: Convert notebook to HTML report
+        run: |
+          jupyter nbconvert --to html output.ipynb --output output.html
+
+      - name: Analyze vulnerabilities with pip-audit
+        run: |
+          pip-audit || true
+
+      - name: Test basic Python syntax
+        run: |
+          python -m compileall .
+
+      - name: Upload executed notebook and HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: |
+            output.ipynb
+            output.html
+
+      - name: Commit and push executed notebook to main branch
+        if: success()
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add output.ipynb output.html
+          git commit -m "Automated update: executed notebook and report [skip ci]"
+          git push origin main
