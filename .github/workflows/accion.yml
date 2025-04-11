@@ -1,0 +1,28 @@
+name: Ejecutar Notebook 
+
+Nombre del workflow 
+
+on: push: branches: [main] 
+
+Se activa cuando haces push a la rama principal 
+
+jobs: build: runs-on: ubuntu-latest # Define el entorno de ejecución 
+
+steps: 
+- name: Checkout del código 
+  uses: actions/checkout@v4 
+# Clona el repositorio en la máquina virtual de GitHub Actions 
+ 
+- name: Configurar Python 
+  uses: actions/setup-python@v5 
+  with: 
+    python-version: '3.10' 
+# Prepara Python 3.10 para ejecutar tu código 
+ 
+- name: Instalar dependencias 
+  run: pip install -r requirements.txt 
+# Instala las librerías necesarias desde tu archivo de requisitos 
+ 
+- name: Ejecutar notebook 
+  run: jupyter nbconvert --to notebook --execute MODIScrooped_Analisis_Avanzado_santander_2025.ipynb 
+# Ejecuta tu cuaderno .ipynb para asegurarse de que corre correctamente
